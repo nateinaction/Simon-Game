@@ -1,0 +1,78 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  background-color: #333;
+}
+h1 {
+	text-align: center;
+	font-size: 60px;
+}
+h3 {
+	text-align: center;
+}
+
+.row {
+  height: 50vh;
+}
+
+.col-xs-6 {
+    height: 100%;
+    padding: 0;
+}
+
+.game-button {
+  height: 100%;
+  width: 100%;
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+.active-button {
+  opacity: 1;
+}
+
+.game-button-0 {
+  @extend .game-button;
+  background-color: cornflowerblue;
+}
+
+.game-button-1 {
+  @extend .game-button;
+  background-color: yellow;
+}
+
+.game-button-2 {
+  @extend .game-button;
+  background-color: red;
+}
+
+.game-button-3 {
+  @extend .game-button;
+  background-color: chartreuse;
+}
+
+.panel-title {
+	font-size: 18px;
+}
+
+.btn {
+	font-size: 18px;
+}
+
+.btn:focus{
+  outline: none;
+}
+
+.progress {
+	height: 15px;
+  background-color: lightsteelblue;
+  border-radius: 0;
+}
+
+#timer-container {
+	display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 90vh;
+}
