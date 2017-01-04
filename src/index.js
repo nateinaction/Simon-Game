@@ -152,6 +152,7 @@ const strict = (state = false, action) => {
 	}
 }
 
+// complexity level 7. Could refactor but I think it's straight forward bc it's a redux reducer
 const activeDefault = {id: null, played: false, timestamp: null}
 const active = (state = activeDefault, action) => {
 	switch (action.type) {
@@ -239,27 +240,40 @@ const playSoundHelper = (number) => {
 	document.getElementById('sound-' + number).play()
 }
 
+const chooseInterval = (level) => {
+	switch (level) {
+		case level > 12:
+			return 500
+		case level > 8:
+			return 600
+		case level > 4:
+			return 800
+		default:
+			return 1000
+	}
+}
+
 let count = 0
+const playSequence = (sequence, level, timestamp) => {
+	let interval = chooseInterval(level)
+	if (playerTime + interval < timestamp && count < level) {
+		let id = sequence[count]
+		playerTime = Date.now()
+		count += 1
+		return store.dispatch(activateButton(id))
+	} else if (count >= level) {
+		count = 0
+		return store.dispatch(setTurn('player'))
+	}
+}
+
 let playerTime = null
 const sequencePlayer = (turn, sequence, level, timestamp) => {
 	if (turn === 'computer') {
 		playerTime = Date.now()
 		return store.dispatch(setTurn('playing sequence'))
-	}
-	if (turn === 'playing sequence') {
-		let interval = 1000
-		interval = (level > 4) ? 800 : interval
-		interval = (level > 8) ? 600 : interval
-		interval = (level > 12) ? 500 : interval
-		if (playerTime + interval < timestamp && count < level) {
-			let id = sequence[count]
-			playerTime = Date.now()
-			count += 1
-			return store.dispatch(activateButton(id))
-		} else if (count >= level) {
-			count = 0
-			return store.dispatch(setTurn('player'))
-		}
+	} else if (turn === 'playing sequence') {
+		return playSequence(sequence, level, timestamp)
 	}
 }
 
