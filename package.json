@@ -1,5 +1,6 @@
 {
-  "name": "calculator",
+  "name": "Simon-Game",
+  "description": "It's only four colored buttons, can you memorize the sequence?",
   "version": "0.1.0",
   "private": true,
   "devDependencies": {
