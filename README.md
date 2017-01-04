@@ -1,4 +1,4 @@
-[![Code Climate](https://codeclimate.com/github/nateinaction/Simon-Game)/badges/gpa.svg)](https://codeclimate.com/github/nateinaction/Simon-Game)
+[![Code Climate](https://codeclimate.com/github/nateinaction/Simon-Game/badges/gpa.svg)](https://codeclimate.com/github/nateinaction/Simon-Game)
 # Simon Game
 ### Built with React + Redux
 
