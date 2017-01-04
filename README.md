@@ -1,10 +1,10 @@
-[![Code Climate](https://codeclimate.com/github/nateinaction/hashtag/badges/gpa.svg)](https://codeclimate.com/github/nateinaction/Simon-Game)
+[![Code Climate](https://codeclimate.com/github/nateinaction/Simon-Game)/badges/gpa.svg)](https://codeclimate.com/github/nateinaction/Simon-Game)
 # Simon Game
 ### Built with React + Redux
 
 It's only four colored buttons, can you memorize the sequence?
 
-Play the game at [http://codepen.io/nateinaction/full/EZxerR/](http://codepen.io/nateinaction/full/EZxerR/)
+Demo: [http://codepen.io/nateinaction/full/EZxerR/](http://codepen.io/nateinaction/full/EZxerR/)
 
 ### Features
 - Player can win the game if they surpass level 20
