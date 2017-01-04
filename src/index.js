@@ -102,6 +102,8 @@ const turn = (state = null, action) => {
  			return null
 		case 'SET_TURN':
  			return action.turn
+		case 'NEXT_LEVEL':
+ 			return 'computer'
 		default:
 			return state
 	}
@@ -254,6 +256,7 @@ const chooseInterval = (level) => {
 }
 
 let count = 0
+let playerTime = null
 const playSequence = (sequence, level, timestamp) => {
 	let interval = chooseInterval(level)
 	if (playerTime + interval < timestamp && count < level) {
@@ -267,7 +270,6 @@ const playSequence = (sequence, level, timestamp) => {
 	}
 }
 
-let playerTime = null
 const sequencePlayer = (turn, sequence, level, timestamp) => {
 	if (turn === 'computer') {
 		playerTime = Date.now()
@@ -302,35 +304,27 @@ const dispatchNewSequence = (sequence) => {
 	}
 }
 
+const arrIsSame = (arrA, arrB) => {
+	let truthyArray = arrA.map((item, index) => {
+		return (arrB[index] === item)
+	})
+	return (truthyArray.indexOf(false) === -1) ? true : false
+}
+
 const theJudge = (turn, sequence, level, player) => {
 	if (turn === 'player') {
-		let playerLength = player.length
-		if (playerLength < level) {
-			let isEqual = player.map((item, index) => {
-				return (sequence[index] === item)
-			})
-			if (isEqual.indexOf(false) !== -1) {
+		if (player.length > 0) {
+			let match = arrIsSame(player, sequence)
+			if (!match) {
 				return store.dispatch(setTurn('fail'))
-			}
-		}
-		if (playerLength === level) {
-			let isEqual = player.map((item, index) => {
-				return (sequence[index] === item)
-			})
-			if (isEqual.indexOf(false) === -1) {
-				if (level < 20) {
-					store.dispatch(nextLevel())
-					return store.dispatch(setTurn('computer'))
+			} else if (player.length === level) {
+				let maxLevel = (level >= 20)
+				if (!maxLevel) {
+					return store.dispatch(nextLevel())
 				} else {
 					return store.dispatch(setTurn('win'))
 				}
-			} else if (isEqual.indexOf(false) !== -1) {
-				return store.dispatch(setTurn('fail'))
 			}
-		}
-		if (playerLength > level) {
-			console.log('something happened')
-			return store.dispatch(setTurn('computer'))
 		}
 	}
 }
@@ -410,7 +404,7 @@ const StatusModal = (props) => {
 		showModal = true
 	}
 	if (props.turn === 'win') {
-		title = 'Congradulations!'
+		title = 'Congratulations!'
 		message = 'Wow! Who knew you had such a great memory? Want to try again?'
 		showModal = true
 	}
