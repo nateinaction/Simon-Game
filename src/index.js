@@ -333,7 +333,7 @@ const failCheck = (turn, strict) => {
 
 const gameControllerSubscribe = () => {
 	store.subscribe(() => {
-		let {turn, level, strict, sequence, player, active, timestamp} = store.getState()
+		let {turn, level, sequence, player, strict, active, timestamp} = store.getState()
 
 		sequencePlayer(turn, sequence, level, timestamp)
 		buttonController(active, timestamp)
