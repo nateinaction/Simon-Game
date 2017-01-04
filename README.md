@@ -4,6 +4,8 @@
 
 It's only four colored buttons, can you memorize the sequence?
 
+Play the game at [http://codepen.io/nateinaction/full/EZxerR/](http://codepen.io/nateinaction/full/EZxerR/)
+
 ### Features
 - Player can win the game if they surpass level 20
 - Sequence replay speed increases on the 5th, 9th, and 13th levels
