@@ -2,9 +2,6 @@
 engines:
   duplication:
     enabled: true
-    exclude_fingerprints:
-    - c27d93125b6ef803649ef94eb20e8ded
-    - ba69eabbb5a59435b1c25c2b59dcb701
     config:
       languages:
       - ruby

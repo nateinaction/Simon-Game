@@ -22,26 +22,60 @@ const sounds = [blueSound, yellowSound, redSound, greenSound]
 	sequence: [0,0,3,1,2],
 	player: [0,0...],
 	strict: true,
-	active: {id: 4, played: false, timestamp: 100000},
+	active: {id: 4, timestamp: 100000},
 	timestamp: 100001
 }
 */
+
+/*
+ * Helper Fns
+ */
+
+// loadAudioHelper fixes issue on mobile safari which loads only on click
+const loadAudioHelper = () => {
+	sounds.forEach((url, index) => {
+		document.getElementById('sound-' + index).load()
+	})
+}
+
+const playSoundHelper = (number) => {
+	document.getElementById('sound-' + number).currentTime = 0.1
+	document.getElementById('sound-' + number).play()
+}
+
+const newSequenceHelper = () => {
+	return Array(20).fill(null).map(() => (
+		Math.floor(Math.random() * 4)
+	))
+}
+
+const arrIsSameHelper = (arrA, arrB) => {
+	let truthyArray = arrA.map((item, index) => {
+		return (arrB[index] === item)
+	})
+	return (truthyArray.indexOf(false) === -1) ? true : false
+}
+
+const chooseIntervalHelper = (level) => {
+	if (level > 12) {
+		return 400
+	}
+	if (level > 8) {
+		return 600
+	}
+	if (level > 4) {
+		return 800
+	}
+	return 1000
+}
 
 /*
  * Redux Action Creators
  */
 
 const clearAll = () => ({
-	type: 'CLEAR_ALL'
-})
-/*
-const clearPlayer = () => ({
-	type: 'CLEAR_PLAYER'
-})
-*/
-const setSequence = (sequence) => ({
-	type: 'SET_SEQUENCE',
-	sequence
+	type: 'CLEAR_ALL',
+	sequence: newSequenceHelper()
 })
 
 const addToPlayer = (item) => ({
@@ -58,9 +92,13 @@ const toggleStrict = () => ({
 	type: 'TOGGLE_STRICT'
 })
 
-const activateButton = (id) => ({
+const nextLevel = () => ({
+	type: 'NEXT_LEVEL'
+})
+
+const activateButton = (id, interval) => ({
 	type: 'ACTIVATE_BUTTON',
-	time: Date.now(),
+	time: Date.now() + interval,
 	id
 })
 
@@ -68,29 +106,100 @@ const deactivateButton = () => ({
 	type: 'DEACTIVATE_BUTTON'
 })
 
-const buttonClick = (id) => (
+const deactivateButtonControl = () => (
 	(dispatch, getState) => {
-    let {turn} = getState()
-
-		if (turn === 'player') {
-			dispatch((addToPlayer(id)))
-		}
-  	dispatch((activateButton(id)))
+		setTimeout(() => {
+			let { active } = getState()
+			if (active.timestamp <= Date.now()) {
+				return dispatch(deactivateButton())
+			}
+		}, 300)
 	}
 )
 
-const updateTimestamp = () => ({
-	type: 'SET_TIMESTAMP',
-	time: Date.now()
-})
+const activeButtonControl = (id) => (
+	dispatch => {
+		let interval = 300
+		playSoundHelper(id)
+		dispatch(activateButton(id, interval))
+		return dispatch(deactivateButtonControl())
+	}
+)
 
-const soundPlayed = () => ({
-	type: 'SOUND_PLAYED'
-})
+const playSequence = (count = 0) => (
+	(dispatch, getState) => {
+		let { turn, sequence, level } = getState()
+		if (turn === 'computer') {
+			let interval = chooseIntervalHelper(level)
+			setTimeout(() => {
+				if (count < level) {
+					let id = sequence[count]
+					let nextCount = count + 1
+					if (nextCount >= level) {
+						dispatch(activeButtonControl(id))
+						return dispatch(setTurn('player'))
+					} else {
+						dispatch(playSequence(nextCount))
+						return dispatch(activeButtonControl(id))
+					}
+				}
+			}, interval);
+		}
+	}
+)
 
-const nextLevel = () => ({
-	type: 'NEXT_LEVEL'
-})
+const setTurnToComputer = () => (
+	dispatch => {
+		dispatch(setTurn('computer'))
+		return dispatch(playSequence())
+	}
+)
+
+const setUserLoss = (strict) => (
+	dispatch => {
+		if (strict) {
+			return dispatch(setTurn('loss'))
+		} else {
+			return dispatch(setTurnToComputer())
+		}
+	}
+)
+
+const setWinOrNextLevel = (sequence, level) => (
+	dispatch => {
+		let maxLevel = (level >= 20)
+		if (!maxLevel) {
+			dispatch(nextLevel())
+			return dispatch(playSequence())
+		} else {
+			return dispatch(setTurn('win'))
+		}
+	}
+)
+
+const validateInput = (id, sequence, level, player, strict) => (
+	dispatch => {
+		let test = [...player, id]
+		let match = arrIsSameHelper(test, sequence)
+		if (!match) {
+			return dispatch(setUserLoss(strict))
+		} else if (test.length === level) {
+			return dispatch(setWinOrNextLevel(sequence, level))
+		}
+		return dispatch(addToPlayer(id))
+	}
+)
+
+const buttonClick = (id) => (
+	(dispatch, getState) => {
+    let { turn, sequence, level, player, strict } = getState()
+		if (turn === 'player') {
+			dispatch((activeButtonControl(id)))
+			return dispatch((validateInput(id, sequence, level, player, strict)))
+		}
+  	return dispatch((activeButtonControl(id)))
+	}
+)
 
 /*
  * Redux Reducers
@@ -121,11 +230,9 @@ const level = (state = 1, action) => {
  	}
  }
 
-const sequence = (state = [], action) => {
+const sequence = (state = newSequenceHelper(), action) => {
 	switch (action.type) {
 		case 'CLEAR_ALL':
-			return []
-		case 'SET_SEQUENCE':
 			return action.sequence
 		default:
 			return state
@@ -137,6 +244,7 @@ const player = (state = [], action) => {
 		case 'CLEAR_ALL':
 		case 'CLEAR_PLAYER':
 		case 'SET_TURN':
+		case 'NEXT_LEVEL':
 			return []
 		case 'ADD_TO_PLAYER':
 			return [...state, action.item]
@@ -155,7 +263,7 @@ const strict = (state = false, action) => {
 }
 
 // complexity level 7. Could refactor but I think it's straight forward bc it's a redux reducer
-const activeDefault = {id: null, played: false, timestamp: null}
+const activeDefault = {id: null, timestamp: null}
 const active = (state = activeDefault, action) => {
 	switch (action.type) {
 		case 'CLEAR_ALL':
@@ -166,22 +274,8 @@ const active = (state = activeDefault, action) => {
 		case 'ACTIVATE_BUTTON':
 			return Object.assign({}, state, {
 				id: action.id,
-				played: false,
 				timestamp: action.time
 			})
-		case 'SOUND_PLAYED':
-			return Object.assign({}, state, {
-				played: true
-			})
-		default:
-			return state
-	}
-}
-
-const timestamp = (state = Date.now(), action) => {
-	switch (action.type) {
-		case 'SET_TIMESTAMP':
-			return action.time
 		default:
 			return state
 	}
@@ -193,8 +287,7 @@ const simonApp = combineReducers({
 	sequence,
 	player,
 	strict,
-	active,
-	timestamp
+	active
 })
 
 /*
@@ -209,164 +302,7 @@ let store = createStore(simonApp, applyMiddleware(thunk))
 
 console.log('initial state')
 console.log(store.getState())
-let prevState = null
-store.subscribe(() => { // log statement removes timestamp tick
-	let state = Object.assign({}, store.getState(), {
-		timestamp: null
-	})
-
-	if (prevState === null) {
-		prevState = state
-	} else {
-		Object.keys(prevState).forEach((key) => {
-			if (prevState[key] !== state[key]) {
-				console.log(state)
-				prevState = state
-			}
-		})
-	}
-})
-
-/*
- * Helper Fns
- */
-
-const loadAudioHelper = () => { // fixes issue on mobile safari which loads only on click
-	sounds.forEach((url, index) => {
-		document.getElementById('sound-' + index).load()
-	})
-}
-
-const playSoundHelper = (number) => {
-	document.getElementById('sound-' + number).currentTime = 0.1
-	document.getElementById('sound-' + number).play()
-}
-
-const chooseInterval = (level) => {
-	switch (level) {
-		case level > 12:
-			return 500
-		case level > 8:
-			return 600
-		case level > 4:
-			return 800
-		default:
-			return 1000
-	}
-}
-
-let count = 0
-let playerTime = null
-const playSequence = (sequence, level, timestamp) => {
-	let interval = chooseInterval(level)
-	if (playerTime + interval < timestamp && count < level) {
-		let id = sequence[count]
-		playerTime = Date.now()
-		count += 1
-		return store.dispatch(activateButton(id))
-	} else if (count >= level) {
-		count = 0
-		return store.dispatch(setTurn('player'))
-	}
-}
-
-const sequencePlayer = (turn, sequence, level, timestamp) => {
-	if (turn === 'computer') {
-		playerTime = Date.now()
-		return store.dispatch(setTurn('playing sequence'))
-	} else if (turn === 'playing sequence') {
-		return playSequence(sequence, level, timestamp)
-	}
-}
-
-const buttonController = (active, timestamp) => {
-	if (active.id !== null) {
-		if (!active.played) {
-			playSoundHelper(active.id)
-			return store.dispatch(soundPlayed())
-		}
-		if (active.timestamp + 300 < timestamp) {
-			return store.dispatch(deactivateButton())
-		}
-	}
-}
-
-const newSequenceHelper = () => {
-	return Array(20).fill(null).map(() => (
-		Math.floor(Math.random() * 4)
-	))
-}
-
-const dispatchNewSequence = (sequence) => {
-	if (sequence.length < 1) {
-		let newSequence = newSequenceHelper()
-		return store.dispatch(setSequence(newSequence))
-	}
-}
-
-const arrIsSame = (arrA, arrB) => {
-	let truthyArray = arrA.map((item, index) => {
-		return (arrB[index] === item)
-	})
-	return (truthyArray.indexOf(false) === -1) ? true : false
-}
-
-const theJudge = (turn, sequence, level, player) => {
-	if (turn === 'player') {
-		if (player.length > 0) {
-			let match = arrIsSame(player, sequence)
-			if (!match) {
-				return store.dispatch(setTurn('fail'))
-			} else if (player.length === level) {
-				let maxLevel = (level >= 20)
-				if (!maxLevel) {
-					return store.dispatch(nextLevel())
-				} else {
-					return store.dispatch(setTurn('win'))
-				}
-			}
-		}
-	}
-}
-
-const failCheck = (turn, strict) => {
-	if (turn === 'fail') {
-		if (strict) {
-			store.dispatch(setTurn('failModal'))
-		} else {
-			store.dispatch(setTurn('computer'))
-		}
-	}
-}
-
-const gameControllerSubscribe = () => {
-	store.subscribe(() => {
-		let {turn, level, sequence, player, strict, active, timestamp} = store.getState()
-
-		sequencePlayer(turn, sequence, level, timestamp)
-		buttonController(active, timestamp)
-		theJudge(turn, sequence, level, player)
-		failCheck(turn, strict)
-
-		// if sequence is cleared, dispatch new sequence
-		dispatchNewSequence(sequence)
-	})
-}
-
-const initializeSimon = () => {
-	let sequence = store.getState()
-	dispatchNewSequence(sequence)
-}
-
-const gameTick = () => {
-	// least ugly solution?
-	setInterval(() => {
-		return store.dispatch(updateTimestamp())
-	}, 100)
-}
-gameTick()
-initializeSimon()
-gameControllerSubscribe()
+store.subscribe(() => console.log(store.getState()))
 
 /*
  * React Presentational Components
@@ -400,7 +336,7 @@ const StatusModal = (props) => {
 	let showModal = false
 	let title = 'Ooops!'
 	let message = 'Looks like you missed one. Want to try again?'
-	if (props.turn === 'failModal') {
+	if (props.turn === 'loss') {
 		showModal = true
 	}
 	if (props.turn === 'win') {
@@ -537,7 +473,7 @@ const mapStateToProps = (state) => ({
 const mapDispatchToProps = (dispatch) => ({
 	handlePlayClick: () => {
 		loadAudioHelper()
-		dispatch(setTurn('computer'))
+		dispatch(setTurnToComputer())
 	},
 	handleStrictClick: () => {
 		dispatch(toggleStrict())
