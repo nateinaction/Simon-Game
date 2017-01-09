@@ -3,6 +3,7 @@ import thunk from 'redux-thunk';
 import React, { PropTypes } from 'react'
 import { Provider, connect } from 'react-redux'
 import { render } from 'react-dom';
+import { Howl } from 'howler'
 import { Grid, Row, Col, Navbar, Nav, NavItem, Glyphicon, Modal, Button } from 'react-bootstrap'
 import './index.scss'
 
@@ -31,17 +32,15 @@ const sounds = [blueSound, yellowSound, redSound, greenSound]
  * Helper Fns
  */
 
-// loadAudioHelper fixes issue on mobile safari which loads only on click
+let audio = {}
 const loadAudioHelper = () => {
 	sounds.forEach((url, index) => {
-		document.getElementById('sound-' + index).load()
+		audio[index] = new Howl({
+		  src: [url]
+		})
 	})
 }
-
-const playSoundHelper = (number) => {
-	document.getElementById('sound-' + number).currentTime = 0.1
-	document.getElementById('sound-' + number).play()
-}
+loadAudioHelper()
 
 const newSequenceHelper = () => {
 	return Array(20).fill(null).map(() => (
@@ -120,7 +119,7 @@ const deactivateButtonControl = () => (
 const activeButtonControl = (id) => (
 	dispatch => {
 		let interval = 300
-		playSoundHelper(id)
+		audio[id].play()
 		dispatch(activateButton(id, interval))
 		return dispatch(deactivateButtonControl())
 	}
@@ -308,16 +307,6 @@ store.subscribe(() => console.log(store.getState()))
  * React Presentational Components
  */
 
- const AudioComponents = () => (
-	<div className='audio-components'>
-		{sounds.map((thisSound, index) => (
-			<audio key={index} id={'sound-' + index} src={sounds[index]} preload='auto'>
-				<p>Your browser does not support the <code>audio</code> element.</p>
-			</audio>
-		))}
-	</div>
-)
-
 const CloseButton = (props) => (
 	<Button
   	bsStyle="primary"
@@ -472,7 +461,6 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
 	handlePlayClick: () => {
-		loadAudioHelper()
 		dispatch(setTurnToComputer())
 	},
 	handleStrictClick: () => {
@@ -523,7 +511,6 @@ const App = (props) => (
 		<GameLayoutContainer />
 		<ControlBarContainer />
 		<StatusModalContainer />
-	  <AudioComponents />
   </div>
 )
 
