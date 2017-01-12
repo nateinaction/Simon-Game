@@ -11,7 +11,8 @@ import blueSound from '../public/simonSound1.mp3'
 import yellowSound from '../public/simonSound2.mp3'
 import redSound from '../public/simonSound3.mp3'
 import greenSound from '../public/simonSound4.mp3'
-const sounds = [blueSound, yellowSound, redSound, greenSound]
+import wrongSound from '../public/wrongSound.mp3'
+const sounds = [blueSound, yellowSound, redSound, greenSound, wrongSound]
 
 /*
  * Example Object
@@ -142,7 +143,7 @@ const playSequence = (count = 0) => (
 						return dispatch(activeButtonControl(id))
 					}
 				}
-			}, interval);
+			}, interval)
 		}
 	}
 )
@@ -159,7 +160,12 @@ const setUserLoss = (strict) => (
 		if (strict) {
 			return dispatch(setTurn('loss'))
 		} else {
-			return dispatch(setTurnToComputer())
+			setTimeout(() => {
+				audio[4].play()
+			}, 300)
+			setTimeout(() => {
+				return dispatch(setTurnToComputer())
+			}, 1200)
 		}
 	}
 )
@@ -195,8 +201,9 @@ const buttonClick = (id) => (
 		if (turn === 'player') {
 			dispatch((activeButtonControl(id)))
 			return dispatch((validateInput(id, sequence, level, player, strict)))
+		} else if (turn === null) {
+			return dispatch((activeButtonControl(id)))
 		}
-  	return dispatch((activeButtonControl(id)))
 	}
 )
 
